@@ -16,15 +16,19 @@ export function replaceExpressionsInCSSTemplateLiteral(cssString) {
     (match, offset, string) => {
       const precedingText = string.slice(0, offset);
       const isValueContext =
-        precedingText.lastIndexOf(':') > precedingText.lastIndexOf(';') &&
-        precedingText.lastIndexOf(':') > precedingText.lastIndexOf('{');
+        precedingText.lastIndexOf(':') >
+          Math.max(
+            precedingText.lastIndexOf(';'),
+            precedingText.lastIndexOf('{')
+          ) &&
+        !precedingText.match(/:(where|is|not|has|nth-child|nth-last-child|nth-of-type|nth-last-of-type|lang)\([^\)]*$/);
 
       let placeholder;
       if (isValueContext) {
         placeholder = `/*! ROLLUP-CSS-PLACEHOLDER-${valueIndex++} */`;
       } else {
         placeholder = `ROLLUP-CSS-PLACEHOLDER-${selectorIndex++}`;
-        if (!precedingText.endsWith('.')) {
+        if (!precedingText.trim().endsWith('.')) {
           placeholder = `.${placeholder}`;
         }
       }

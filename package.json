@@ -1,0 +1,42 @@
+{
+  "name": "rollup-plugin-template-postcss",
+  "version": "1.0.0",
+  "description": "Rollup starter plugin",
+  "main": "dist/rollup-plugin-template-postcss.cjs.js",
+  "module": "dist/rollup-plugin-template-postcss.es.js",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "rollup",
+    "rollup-plugin",
+    "postcss",
+    "css",
+    "template",
+    "lit"
+  ],
+  "homepage": "https://github.com/ph1p/rollup-plugin-template-postcss",
+  "author": "Philip Stapelfeldt",
+  "license": "MIT",
+  "repository": "ph1p/rollup-plugin-template-postcss",
+  "bugs": {
+    "url": "https://github.com/ph1p/rollup-plugin-template-postcss/issues"
+  },
+  "scripts": {
+    "prebuild": "rimraf -rf dist/*",
+    "build": "rollup -c",
+    "test": "node --test test/*.test.mjs",
+    "pretest": "pnpm run build",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "@rollup/pluginutils": "^5.1.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-virtual": "^3.0.2",
+    "postcss": "^8.4.40",
+    "rimraf": "^2.6.3",
+    "rollup": "^1.16.2"
+  },
+  "packageManager": "pnpm@9.6.0+sha512.38dc6fba8dba35b39340b9700112c2fe1e12f10b17134715a4aa98ccf7bb035e76fd981cf0bb384dfa98f8d6af5481c2bef2f4266a24bfa20c34eb7147ce0b5e"
+}

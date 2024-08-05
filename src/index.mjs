@@ -62,16 +62,16 @@ export function templatePostcss(
     include = ['**/*.js', '**/*.ts'],
     exclude = [],
     prefix = 'css',
-  } = {}
+  }
 ) {
   const filter = createFilter(include, exclude);
 
   return {
-    name: 'lit-postcss',
+    name: 'template-postcss',
     async transform(code, id) {
       if (!filter(id)) return null;
 
-      const cssTemplateRegex = new RegExp(`${prefix}\`([\s\S]*?)\``, 'g');
+      const cssTemplateRegex = new RegExp(`${prefix}\`([\\s\\S]*?)\``, 'gm');
       let match;
       const replacements = [];
 

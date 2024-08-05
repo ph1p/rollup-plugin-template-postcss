@@ -1,51 +1,38 @@
 import { createFilter } from '@rollup/pluginutils';
 
 /**
- * Replaces template literal expressions with placeholders and collects the original expressions.
- * @param {string} cssString - The CSS string to process.
+ * Replaces template literal expressions with placeholders in a CSS string.
+ * @param {string} cssString - The CSS string.
  * @returns {{ replacedCSS: string, expressions: Array<{ placeholder: string, expression: string }> }}
  */
 export function replaceExpressionsInCSSTemplateLiteral(cssString) {
-  let selectorIndex = 0,
-    valueIndex = 0;
+  let selectorIndex = 0, valueIndex = 0;
   const expressions = [];
-  const templateLiteralRegex = /\$\{[^}]*\}/g;
 
-  const replacedCSS = cssString.replace(
-    templateLiteralRegex,
-    (match, offset, string) => {
-      const precedingText = string.slice(0, offset);
-      const isValueContext =
-        precedingText.lastIndexOf(':') >
-          Math.max(
-            precedingText.lastIndexOf(';'),
-            precedingText.lastIndexOf('{')
-          ) &&
-        !precedingText.match(/:(where|is|not|has|nth-child|nth-last-child|nth-of-type|nth-last-of-type|lang)\([^\)]*$/);
+  const replacedCSS = cssString.replace(/\$\{[^}]+\}/g, (match, offset, string) => {
+    const precedingText = string.slice(0, offset);
+    const lastColonIndex = precedingText.lastIndexOf(':');
+    const lastSemicolonOrBraceIndex = Math.max(precedingText.lastIndexOf(';'), precedingText.lastIndexOf('{'));
 
-      let placeholder;
-      if (isValueContext) {
-        placeholder = `/*! ROLLUP-CSS-PLACEHOLDER-${valueIndex++} */`;
-      } else {
-        placeholder = `ROLLUP-CSS-PLACEHOLDER-${selectorIndex++}`;
-        if (!precedingText.trim().endsWith('.')) {
-          placeholder = `.${placeholder}`;
-        }
-      }
+    const isValueContext = lastColonIndex > lastSemicolonOrBraceIndex &&
+      !/(:(where|is|not|has|nth-child|nth-last-child|nth-of-type|nth-last-of-type|lang)\()[^)]*$/.test(precedingText);
 
-      expressions.push({ placeholder, expression: match });
-      return placeholder;
-    }
-  );
+    const placeholder = isValueContext
+      ? `/*! ROLLUP-CSS-PLACEHOLDER-${valueIndex++} */`
+      : `${precedingText.trim().endsWith('.') ? '' : '.'}ROLLUP-CSS-PLACEHOLDER-${selectorIndex++}`;
+
+    expressions.push({ placeholder, expression: match });
+    return placeholder;
+  });
 
   return { replacedCSS, expressions };
 }
 
 /**
- * Replaces placeholders with original expressions in the CSS string.
+ * Merges placeholders with their original expressions in the CSS string.
  * @param {string} replacedCSS - The CSS string with placeholders.
- * @param {Array<{ placeholder: string, expression: string }>} expressions - Array of objects with placeholders and expressions.
- * @returns {string} - The CSS string with restored original expressions.
+ * @param {Array<{ placeholder: string, expression: string }>} expressions - Array of placeholders and expressions.
+ * @returns {string} - The CSS string with restored expressions.
  */
 export function mergeCSSWithExpressions(replacedCSS, expressions) {
   return expressions.reduce(
@@ -55,19 +42,11 @@ export function mergeCSSWithExpressions(replacedCSS, expressions) {
 }
 
 /**
- * Rollup plugin to process CSS within JavaScript files using PostCSS.
- * @param {Object} options - Plugin options including PostCSS plugins, file filters and template literal prefix.
+ * Rollup plugin to process CSS in JavaScript files using PostCSS.
+ * @param {Object} options - Plugin options.
  * @returns {Object} - The Rollup plugin object.
  */
-export function templatePostcss(
-  postcss,
-  {
-    plugins = [],
-    include = ['**/*.js', '**/*.ts'],
-    exclude = [],
-    prefix = 'css',
-  }
-) {
+export function templatePostcss(postcss, { plugins = [], include = ['**/*.js', '**/*.ts'], exclude = [], prefix = 'css' }) {
   const filter = createFilter(include, exclude);
 
   return {
@@ -75,26 +54,27 @@ export function templatePostcss(
     async transform(code, id) {
       if (!filter(id)) return null;
 
-      const cssTemplateRegex = new RegExp(`${prefix}\`([\\s\\S]*?)\``, 'gm');
-      let match;
+      const cssTemplateRegex = new RegExp(`${prefix}\\\`([\\s\\S]*?)\\\``, 'gm');
       const replacements = [];
 
+      let match;
       while ((match = cssTemplateRegex.exec(code)) !== null) {
         const [fullMatch, rawCSS] = match;
-        const { replacedCSS, expressions } =
-          replaceExpressionsInCSSTemplateLiteral(rawCSS);
-        const processedCSS = (await postcss(plugins).process(replacedCSS)).css;
-        replacements.push({ fullMatch, processedCSS, expressions });
+        try {
+          const { replacedCSS, expressions } = replaceExpressionsInCSSTemplateLiteral(rawCSS);
+          const processedCSS = (await postcss(plugins).process(replacedCSS, { from: undefined })).css;
+          replacements.push({ fullMatch, processedCSS, expressions });
+        } catch (error) {
+          this.error(`Error processing CSS: ${error.message}`);
+        }
       }
-
-      if (replacements.length === 0) return null;
 
       for (const { fullMatch, processedCSS, expressions } of replacements) {
         const finalCSS = mergeCSSWithExpressions(processedCSS, expressions);
         code = code.replace(fullMatch, `css\`${finalCSS}\``);
       }
 
-      return { code, map: null };
+      return replacements.length ? { code, map: null } : null;
     },
   };
 }

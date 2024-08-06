@@ -1,4 +1,5 @@
 import { createFilter } from '@rollup/pluginutils';
+import postcss from 'postcss';
 
 /**
  * Replaces template literal expressions with placeholders in a CSS string.
@@ -57,48 +58,54 @@ export function mergeCSSWithExpressions(replacedCSS, expressions) {
  * @param {Object} options - Plugin options.
  * @returns {Object} - The Rollup plugin object.
  */
-export function templatePostcss(
-  postcss,
-  {
-    plugins = [],
-    include = ['**/*.js', '**/*.ts'],
-    exclude = [],
-    prefix = 'css',
-  }
-) {
+export function templatePostcss({
+  plugins = [],
+  include = ['**/*.js', '**/*.ts'],
+  exclude = [],
+  tags = 'css',
+}) {
   const filter = createFilter(include, exclude);
   const cssTemplateRegex = new RegExp(
-    `(?:${
-      Array.isArray(prefix) ? prefix.join('|') : prefix
-    })\\\`([\\s\\S]*?)\\\``,
+    `(${Array.isArray(tags) ? tags.join('|') : tags})\\\`([\\s\\S]*?)\\\``,
     'gm'
   );
 
   return {
     name: 'template-postcss',
     async transform(code, id) {
-      if (!filter(id)) return null;
+      const isVirtual = id.includes('virtual:');
+      if (isVirtual) {
+        if (!filter(id.split(':')[1])) return null;
+      } else {
+        if (!filter(id)) return null;
+      }
 
       const replacements = [];
       let match;
 
       while ((match = cssTemplateRegex.exec(code)) !== null) {
-        const [fullMatch, rawCSS] = match;
+        const [fullMatch, tags, rawCSS] = match;
+
         try {
           const { replacedCSS, expressions } =
             replaceExpressionsInCSSTemplateLiteral(rawCSS);
           const processedCSS = (
             await postcss(plugins).process(replacedCSS, { from: undefined })
           ).css;
-          replacements.push({ fullMatch, processedCSS, expressions });
+          replacements.push({ fullMatch, processedCSS, expressions, tags });
         } catch (error) {
           this.error(`Error processing CSS: ${error.message}`);
         }
       }
 
-      for (const { fullMatch, processedCSS, expressions } of replacements) {
+      for (const {
+        fullMatch,
+        processedCSS,
+        expressions,
+        tags,
+      } of replacements) {
         const finalCSS = mergeCSSWithExpressions(processedCSS, expressions);
-        code = code.replace(fullMatch, `css\`${finalCSS}\``);
+        code = code.replace(fullMatch, `${tags}\`${finalCSS}\``);
       }
 
       return replacements.length ? { code, map: null } : null;

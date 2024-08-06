@@ -13,14 +13,13 @@ npm install --save-dev rollup-plugin-template-postcss postcss
 
 ```js
 import { templatePostcss } from 'rollup-plugin-template-postcss';
-import postcss from 'postcss';
 
 export default {
   // ...
   plugins: [
     // ...
-    templatePostcss(postcss, {
-      prefix: ['css', 'myCustomCss'], // default is 'css' (optional)
+    templatePostcss({
+      tags: ['css', 'myCustomCss'], // default is 'css' (optional)
       include: ['**/*.js', '**/*.ts'], // default (optional)
       exclude: [], // default (optional)
       // PostCSS plugins
@@ -38,13 +37,12 @@ npm install --save-dev cssnano cssnano-preset-advanced
 
 ```js
 import { templatePostcss } from 'rollup-plugin-template-postcss';
-import postcss from 'postcss';
 
 export default {
   // ...
   plugins: [
     // ...
-    templatePostcss(postcss, {
+    templatePostcss({
       plugins: [
         cssnano({
           preset: [
@@ -66,7 +64,6 @@ export default {
 
 ```js
 import { templatePostcss } from 'rollup-plugin-template-postcss';
-import postcss from 'postcss';
 
 export default {
   //...
@@ -74,7 +71,7 @@ export default {
     rollupOptions: {
       plugins: [
         //...
-        templatePostcss(postcss, {
+        templatePostcss({
           plugins: [],
         }),
       ],

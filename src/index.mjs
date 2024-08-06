@@ -73,12 +73,7 @@ export function templatePostcss({
   return {
     name: 'template-postcss',
     async transform(code, id) {
-      const isVirtual = id.includes('virtual:');
-      if (isVirtual) {
-        if (!filter(id.split(':')[1])) return null;
-      } else {
-        if (!filter(id)) return null;
-      }
+      if (!filter(id)) return null;
 
       const replacements = [];
       let match;

@@ -6,24 +6,35 @@ import { createFilter } from '@rollup/pluginutils';
  * @returns {{ replacedCSS: string, expressions: Array<{ placeholder: string, expression: string }> }}
  */
 export function replaceExpressionsInCSSTemplateLiteral(cssString) {
-  let selectorIndex = 0, valueIndex = 0;
   const expressions = [];
+  let selectorIndex = 0,
+    valueIndex = 0;
 
-  const replacedCSS = cssString.replace(/\$\{[^}]+\}/g, (match, offset, string) => {
-    const precedingText = string.slice(0, offset);
-    const lastColonIndex = precedingText.lastIndexOf(':');
-    const lastSemicolonOrBraceIndex = Math.max(precedingText.lastIndexOf(';'), precedingText.lastIndexOf('{'));
+  const replacedCSS = cssString.replace(
+    /\$\{[^}]+\}/g,
+    (match, offset, string) => {
+      const precedingText = string.slice(0, offset);
+      const lastColonIndex = precedingText.lastIndexOf(':');
+      const lastSemicolonOrBraceIndex = Math.max(
+        precedingText.lastIndexOf(';'),
+        precedingText.lastIndexOf('{')
+      );
+      const isValueContext =
+        lastColonIndex > lastSemicolonOrBraceIndex &&
+        !/(:(where|is|not|has|nth-child|nth-last-child|nth-of-type|nth-last-of-type|lang)\()[^)]*$/.test(
+          precedingText
+        );
 
-    const isValueContext = lastColonIndex > lastSemicolonOrBraceIndex &&
-      !/(:(where|is|not|has|nth-child|nth-last-child|nth-of-type|nth-last-of-type|lang)\()[^)]*$/.test(precedingText);
+      const placeholder = isValueContext
+        ? `/*! ROLLUP-CSS-PLACEHOLDER-${valueIndex++} */`
+        : `${
+            precedingText.trim().endsWith('.') ? '' : '.'
+          }ROLLUP-CSS-PLACEHOLDER-${selectorIndex++}`;
 
-    const placeholder = isValueContext
-      ? `/*! ROLLUP-CSS-PLACEHOLDER-${valueIndex++} */`
-      : `${precedingText.trim().endsWith('.') ? '' : '.'}ROLLUP-CSS-PLACEHOLDER-${selectorIndex++}`;
-
-    expressions.push({ placeholder, expression: match });
-    return placeholder;
-  });
+      expressions.push({ placeholder, expression: match });
+      return placeholder;
+    }
+  );
 
   return { replacedCSS, expressions };
 }
@@ -46,23 +57,39 @@ export function mergeCSSWithExpressions(replacedCSS, expressions) {
  * @param {Object} options - Plugin options.
  * @returns {Object} - The Rollup plugin object.
  */
-export function templatePostcss(postcss, { plugins = [], include = ['**/*.js', '**/*.ts'], exclude = [], prefix = 'css' }) {
+export function templatePostcss(
+  postcss,
+  {
+    plugins = [],
+    include = ['**/*.js', '**/*.ts'],
+    exclude = [],
+    prefix = 'css',
+  }
+) {
   const filter = createFilter(include, exclude);
+  const cssTemplateRegex = new RegExp(
+    `(?:${
+      Array.isArray(prefix) ? prefix.join('|') : prefix
+    })\\\`([\\s\\S]*?)\\\``,
+    'gm'
+  );
 
   return {
     name: 'template-postcss',
     async transform(code, id) {
       if (!filter(id)) return null;
 
-      const cssTemplateRegex = new RegExp(`${prefix}\\\`([\\s\\S]*?)\\\``, 'gm');
       const replacements = [];
-
       let match;
+
       while ((match = cssTemplateRegex.exec(code)) !== null) {
         const [fullMatch, rawCSS] = match;
         try {
-          const { replacedCSS, expressions } = replaceExpressionsInCSSTemplateLiteral(rawCSS);
-          const processedCSS = (await postcss(plugins).process(replacedCSS, { from: undefined })).css;
+          const { replacedCSS, expressions } =
+            replaceExpressionsInCSSTemplateLiteral(rawCSS);
+          const processedCSS = (
+            await postcss(plugins).process(replacedCSS, { from: undefined })
+          ).css;
           replacements.push({ fullMatch, processedCSS, expressions });
         } catch (error) {
           this.error(`Error processing CSS: ${error.message}`);

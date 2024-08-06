@@ -20,9 +20,9 @@ export default {
   plugins: [
     // ...
     templatePostcss(postcss, {
-      prefix: 'css', // default optional
-      include: ['**/*.js', '**/*.ts'], // default optional
-      exclude: [], // default optional
+      prefix: ['css', 'myCustomCss'], // default is 'css' (optional)
+      include: ['**/*.js', '**/*.ts'], // default (optional)
+      exclude: [], // default (optional)
       // PostCSS plugins
       plugins: [],
     }),
@@ -75,10 +75,6 @@ export default {
       plugins: [
         //...
         templatePostcss(postcss, {
-          prefix: 'css', // default optional
-          include: ['**/*.js', '**/*.ts'], // default optional
-          exclude: [], // default optional
-          // PostCSS plugins
           plugins: [],
         }),
       ],

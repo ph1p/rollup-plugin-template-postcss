@@ -11,6 +11,17 @@ npm install --save-dev rollup-plugin-template-postcss postcss
 
 ## Usage
 
+### Options
+
+| Option    | Type                | Default                  | Description                           |
+| --------- | ------------------- | ------------------------ | ------------------------------------- |
+| `plugins` | `Array`             | `[]`                     | PostCSS plugins to use.               |
+| `include` | `Array`             | `['**/*.js', '**/*.ts']` | Glob patterns to include.             |
+| `exclude` | `Array`             | `[]`                     | Glob patterns to exclude.             |
+| `tags`    | `Array` or `String` | `'css'`                  | CSS template literal tags to process. |
+
+### Example
+
 ```js
 import { templatePostcss } from 'rollup-plugin-template-postcss';
 

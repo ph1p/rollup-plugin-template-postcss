@@ -16,12 +16,12 @@ export function replaceExpressionsInCSSTemplateLiteral(cssString) {
     (match, offset, string) => {
       const precedingText = string.slice(0, offset);
       const lastColonIndex = precedingText.lastIndexOf(':');
-      const lastSemicolonOrBraceIndex = Math.max(
-        precedingText.lastIndexOf(';'),
-        precedingText.lastIndexOf('{')
-      );
       const isValueContext =
-        lastColonIndex > lastSemicolonOrBraceIndex &&
+        lastColonIndex >
+          Math.max(
+            precedingText.lastIndexOf(';'),
+            precedingText.lastIndexOf('{')
+          ) &&
         !/(:(where|is|not|has|nth-child|nth-last-child|nth-of-type|nth-last-of-type|lang)\()[^)]*$/.test(
           precedingText
         );
@@ -48,13 +48,13 @@ export function replaceExpressionsInCSSTemplateLiteral(cssString) {
  */
 export function mergeCSSWithExpressions(replacedCSS, expressions) {
   return expressions.reduce(
-    (acc, { placeholder, expression }) => acc.replace(placeholder, expression),
+    (css, { placeholder, expression }) => css.replace(placeholder, expression),
     replacedCSS
   );
 }
 
 /**
- * Rollup plugin to process CSS in JavaScript files using PostCSS.
+ * Rollup plugin to process CSS Template Literals in JavaScript files using PostCSS.
  * @param {Object} options - Plugin options.
  * @returns {Object} - The Rollup plugin object.
  */
@@ -79,7 +79,7 @@ export function templatePostcss({
       let match;
 
       while ((match = cssTemplateRegex.exec(code)) !== null) {
-        const [fullMatch, tags, rawCSS] = match;
+        const [fullMatch, tag, rawCSS] = match;
 
         try {
           const { replacedCSS, expressions } =
@@ -87,21 +87,19 @@ export function templatePostcss({
           const processedCSS = (
             await postcss(plugins).process(replacedCSS, { from: undefined })
           ).css;
-          replacements.push({ fullMatch, processedCSS, expressions, tags });
+          replacements.push({
+            fullMatch,
+            finalCSS: mergeCSSWithExpressions(processedCSS, expressions),
+            tag,
+          });
         } catch (error) {
           this.error(`Error processing CSS: ${error.message}`);
         }
       }
 
-      for (const {
-        fullMatch,
-        processedCSS,
-        expressions,
-        tags,
-      } of replacements) {
-        const finalCSS = mergeCSSWithExpressions(processedCSS, expressions);
-        code = code.replace(fullMatch, `${tags}\`${finalCSS}\``);
-      }
+      replacements.forEach(({ fullMatch, finalCSS, tag }) => {
+        code = code.replace(fullMatch, `${tag}\`${finalCSS}\``);
+      });
 
       return replacements.length ? { code, map: null } : null;
     },

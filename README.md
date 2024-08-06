@@ -48,6 +48,7 @@ npm install --save-dev cssnano cssnano-preset-advanced
 
 ```js
 import { templatePostcss } from 'rollup-plugin-template-postcss';
+import cssnano from 'cssnano';
 
 export default {
   // ...

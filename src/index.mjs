@@ -27,7 +27,7 @@ export function replaceExpressionsInCSSTemplateLiteral(cssString) {
         );
 
       const placeholder = isValueContext
-        ? `/*! ROLLUP-CSS-PLACEHOLDER-${valueIndex++} */`
+        ? `var(--rollup-css-placeholder-${valueIndex++})`
         : `${
             precedingText.trim().endsWith('.') ? '' : '.'
           }ROLLUP-CSS-PLACEHOLDER-${selectorIndex++}`;
@@ -73,6 +73,9 @@ export function templatePostcss({
   return {
     name: 'template-postcss',
     async transform(code, id) {
+      if (id.includes('virtual:')) {
+        id = id.split('virtual:')[1];
+      }
       if (!filter(id)) return null;
 
       const replacements = [];

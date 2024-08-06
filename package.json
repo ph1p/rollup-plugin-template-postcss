@@ -1,6 +1,6 @@
 {
   "name": "rollup-plugin-template-postcss",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Rollup starter plugin",
   "main": "dist/rollup-plugin-template-postcss.cjs.js",
   "module": "dist/rollup-plugin-template-postcss.es.js",

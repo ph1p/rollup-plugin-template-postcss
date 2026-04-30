@@ -23,15 +23,15 @@ npm install --save-dev rollup-plugin-template-postcss postcss
 ### Example
 
 ```js
-import { templatePostcss } from 'rollup-plugin-template-postcss';
+import { templatePostcss } from "rollup-plugin-template-postcss";
 
 export default {
   // ...
   plugins: [
     // ...
     templatePostcss({
-      tags: ['css', 'myCustomCss'], // default is 'css' (optional)
-      include: ['**/*.js', '**/*.ts'], // default (optional)
+      tags: ["css", "myCustomCss"], // default is 'css' (optional)
+      include: ["**/*.js", "**/*.ts"], // default (optional)
       exclude: [], // default (optional)
       // PostCSS plugins
       plugins: [],
@@ -47,8 +47,8 @@ npm install --save-dev cssnano cssnano-preset-advanced
 ```
 
 ```js
-import { templatePostcss } from 'rollup-plugin-template-postcss';
-import cssnano from 'cssnano';
+import { templatePostcss } from "rollup-plugin-template-postcss";
+import cssnano from "cssnano";
 
 export default {
   // ...
@@ -58,7 +58,7 @@ export default {
       plugins: [
         cssnano({
           preset: [
-            'advanced',
+            "advanced",
             {
               discardComments: {
                 removeAll: true,
@@ -74,24 +74,43 @@ export default {
 
 ### With vite
 
+**vite.config.\***
+
 ```js
-import { templatePostcss } from 'rollup-plugin-template-postcss';
+import { templatePostcss } from "rollup-plugin-template-postcss";
 
 export default {
   //...
-  build: {
-    rollupOptions: {
-      plugins: [
-        //...
-        templatePostcss({
-          plugins: [],
-        }),
-      ],
-    },
-  },
+  plugins: [
+    //...
+    templatePostcss({
+      plugins: [],
+    }),
+  ],
 };
 ```
 
-## License
+### With vite+tailwind
 
-MIT
+**vite.config.\***
+
+```js
+import { templatePostcss } from "rollup-plugin-template-postcss";
+import tailwindcss from "@tailwindcss/vite";
+import postcssTailwindcss from "@tailwindcss/postcss";
+
+export default {
+  //...
+  plugins: [
+    //...
+    typescript(),
+    templatePostcss({
+      plugins: [
+        postcssTailwindcss({
+          base: path.resolve(__dirname, "./path"),
+        }),
+      ],
+    }),
+  ],
+};
+```

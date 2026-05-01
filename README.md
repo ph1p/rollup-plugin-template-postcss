@@ -90,11 +90,12 @@ export default {
 };
 ```
 
-### With vite+tailwind
+### With vite+tailwind (v4)
 
 **vite.config.\***
 
 ```js
+import path from "path";
 import { templatePostcss } from "rollup-plugin-template-postcss";
 import tailwindcss from "@tailwindcss/vite";
 import postcssTailwindcss from "@tailwindcss/postcss";
@@ -103,14 +104,25 @@ export default {
   //...
   plugins: [
     //...
-    typescript(),
+    tailwindcss(),
     templatePostcss({
       plugins: [
         postcssTailwindcss({
-          base: path.resolve(__dirname, "./path"),
+          base: path.resolve(__dirname, "."),
         }),
       ],
     }),
   ],
 };
+```
+
+In your component CSS template literals, use the Tailwind v4 syntax:
+
+```js
+const styles = css`
+  @reference "tailwindcss";
+  .foo {
+    @apply text-sm font-bold;
+  }
+`;
 ```

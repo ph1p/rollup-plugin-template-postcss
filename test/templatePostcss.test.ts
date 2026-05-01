@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { rollup } from "rollup";
 import virtual from "@rollup/plugin-virtual";
 import { templatePostcss } from "../dist/index.mjs";
+import postcssTailwindcss from "@tailwindcss/postcss";
 
 test("templatePostcss should process CSS template literals", async () => {
   const inputCode = `
@@ -34,6 +35,37 @@ test("templatePostcss should process CSS template literals", async () => {
     code,
     "const styles = css`\n      div { color: ${color}; }\n      .foo { color: red; }\n      .${customSelector} { color: blue; background-image: url(${imageUrl}); }\n      .before .${customSelector}, .after { border: ${border} solid #000; }\n    `;\n    console.log(styles);\n",
   );
+});
+
+test("templatePostcss should process CSS template literals with tailwindcss postcss plugin", async () => {
+  const projectRoot = new URL("..", import.meta.url).pathname;
+  const inputCode = `
+    const styles = css\`
+      @reference "tailwindcss";
+      .foo { @apply text-sm; }
+    \`;
+    console.log(styles);
+  `;
+
+  const bundle = await rollup({
+    input: `${projectRoot}entry.js`,
+    plugins: [
+      templatePostcss({
+        plugins: [postcssTailwindcss({ base: projectRoot })],
+        include: [`${projectRoot}**/*.js`],
+      }),
+      virtual({
+        [`${projectRoot}entry.js`]: inputCode,
+      }),
+    ],
+  });
+
+  const { output } = await bundle.generate({ format: "es" });
+  const { code } = output[0];
+
+  assert.ok(code.includes(".foo"), "output contains .foo rule");
+  assert.ok(!code.includes("@apply"), "@apply directive was processed by tailwind");
+  assert.ok(!code.includes("@reference"), "@reference directive was processed");
 });
 
 test("templatePostcss should process CSS template literals with custom tags", async () => {

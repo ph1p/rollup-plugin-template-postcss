@@ -214,7 +214,8 @@ function getExpressionPlaceholder(
 }
 
 function normalizeId(id: string): string {
-  return id.startsWith("virtual:") ? id.slice("virtual:".length) : id;
+  const stripped = id.startsWith("\0") ? id.slice(1) : id;
+  return stripped.startsWith("virtual:") ? stripped.slice("virtual:".length) : stripped;
 }
 
 function normalizeTags(tags: string | string[]): string[] {
@@ -369,7 +370,7 @@ export function templatePostcss({
           const { replacedCSS, expressions } = replaceExpressionsInCSSTemplateLiteral(
             match.content,
           );
-          const processedCSS = (await postcss(plugins).process(replacedCSS, { from: undefined }))
+          const processedCSS = (await postcss(plugins).process(replacedCSS, { from: normalizedId }))
             .css;
 
           transformedParts.push(

@@ -2,9 +2,9 @@ import { createFilter, type FilterPattern } from "@rollup/pluginutils";
 import type { AcceptedPlugin } from "postcss";
 import postcss from "postcss";
 
-type CssExpressionContext = "selector" | "value";
+export type CssExpressionContext = "selector" | "value";
 
-interface CssExpressionReplacement {
+export interface CssExpressionReplacement {
   context: CssExpressionContext;
   expression: string;
   placeholder: string;

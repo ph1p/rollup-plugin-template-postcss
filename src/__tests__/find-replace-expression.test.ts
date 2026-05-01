@@ -1,6 +1,5 @@
-import { strict as assert } from "node:assert";
-import { test } from "node:test";
-import { replaceExpressionsInCSSTemplateLiteral } from "../dist/index.mjs";
+import { test, expect } from "vitest";
+import { replaceExpressionsInCSSTemplateLiteral } from "../";
 
 test("should replace template literals with placeholders in CSS selectors", () => {
   const cssString = `\${element},
@@ -40,12 +39,11 @@ p:lang(\${languageCode}) {
 
   const result = replaceExpressionsInCSSTemplateLiteral(cssString);
 
-  assert.strictEqual(
-    result.replacedCSS,
+  expect(result.replacedCSS).toBe(
     ".ROLLUP-CSS-PLACEHOLDER-0,\n.foo.ROLLUP-CSS-PLACEHOLDER-1 {\n    color: var(--rollup-css-placeholder-0);\n}\n\n:is(.ROLLUP-CSS-PLACEHOLDER-2) {\n  color: red;\n}\n\n:where(.ROLLUP-CSS-PLACEHOLDER-3) {\n  background-color: blue;\n}\n\n:not(.ROLLUP-CSS-PLACEHOLDER-4.ROLLUP-CSS-PLACEHOLDER-5) {\n  margin: 10px;\n}\ndiv:has(.ROLLUP-CSS-PLACEHOLDER-6) {\n  border: 1px solid black;\n}\np:nth-child(.ROLLUP-CSS-PLACEHOLDER-7) {\n  font-weight: var(--rollup-css-placeholder-1);\n}\nli:nth-last-child(.ROLLUP-CSS-PLACEHOLDER-8) {\n  color: var(--rollup-css-placeholder-2);\n}\nh1:nth-of-type(.ROLLUP-CSS-PLACEHOLDER-9) {\n  font-size: var(--rollup-css-placeholder-3)em;\n}\np:nth-last-of-type(.ROLLUP-CSS-PLACEHOLDER-10) {\n  text-align: var(--rollup-css-placeholder-4);\n}\np:lang(.ROLLUP-CSS-PLACEHOLDER-11) {\n  font-style: var(--rollup-css-placeholder-5);\n}",
   );
 
-  assert.deepEqual(result.expressions, [
+  expect(result.expressions).toEqual([
     { context: "selector", placeholder: ".ROLLUP-CSS-PLACEHOLDER-0", expression: "${element}" },
     { context: "selector", placeholder: "ROLLUP-CSS-PLACEHOLDER-1", expression: "${element2}" },
     { context: "value", placeholder: "var(--rollup-css-placeholder-0)", expression: "${color}" },
@@ -79,11 +77,7 @@ p:lang(\${languageCode}) {
       placeholder: ".ROLLUP-CSS-PLACEHOLDER-9",
       expression: "${nthOfTypeValue}",
     },
-    {
-      context: "value",
-      placeholder: "var(--rollup-css-placeholder-3)",
-      expression: "${fontSize}",
-    },
+    { context: "value", placeholder: "var(--rollup-css-placeholder-3)", expression: "${fontSize}" },
     {
       context: "selector",
       placeholder: ".ROLLUP-CSS-PLACEHOLDER-10",
@@ -111,13 +105,9 @@ test("should replace template literals with placeholders in CSS values", () => {
   const cssString = "div { background: ${bgColor}; }";
   const result = replaceExpressionsInCSSTemplateLiteral(cssString);
 
-  assert.strictEqual(result.replacedCSS, "div { background: var(--rollup-css-placeholder-0); }");
-  assert.deepEqual(result.expressions, [
-    {
-      context: "value",
-      placeholder: "var(--rollup-css-placeholder-0)",
-      expression: "${bgColor}",
-    },
+  expect(result.replacedCSS).toBe("div { background: var(--rollup-css-placeholder-0); }");
+  expect(result.expressions).toEqual([
+    { context: "value", placeholder: "var(--rollup-css-placeholder-0)", expression: "${bgColor}" },
   ]);
 });
 
@@ -125,16 +115,11 @@ test("should handle multiple template literals", () => {
   const cssString = "div { color: ${color}; background: ${bgColor}; }";
   const result = replaceExpressionsInCSSTemplateLiteral(cssString);
 
-  assert.strictEqual(
-    result.replacedCSS,
+  expect(result.replacedCSS).toBe(
     "div { color: var(--rollup-css-placeholder-0); background: var(--rollup-css-placeholder-1); }",
   );
-  assert.deepEqual(result.expressions, [
+  expect(result.expressions).toEqual([
     { context: "value", placeholder: "var(--rollup-css-placeholder-0)", expression: "${color}" },
-    {
-      context: "value",
-      placeholder: "var(--rollup-css-placeholder-1)",
-      expression: "${bgColor}",
-    },
+    { context: "value", placeholder: "var(--rollup-css-placeholder-1)", expression: "${bgColor}" },
   ]);
 });
